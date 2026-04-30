@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Danh sách Nhân Viên</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+</head>
+<body class="bg-light">
+
+<div class="container mt-5">
+    <div class="card shadow">
+        <div class="card-header bg-primary text-white">
+            <h3 class="mb-0">Danh Sách Nhân Viên</h3>
+        </div>
+        <div class="card-body">
+            <table class="table table-bordered table-hover text-center">
+                <thead class="thead-light">
+                <tr>
+                    <th>STT</th>
+                    <th>Avatar</th>
+                    <th>Họ và Tên</th>
+                    <th>Tuổi</th>
+                    <th>Phòng Ban</th>
+                    <th>Trạng thái</th>
+                </tr>
+                </thead>
+                <tbody>
+                <!-- Vòng lặp in danh sách nhân viên -->
+                <tr th:each="emp, stat : ${employees}">
+                    <td th:text="${stat.count}"></td>
+                    <td>
+                        <!-- Tạm hiển thị text avatar, nếu có link ảnh thật có thể dùng thẻ img -->
+                        <span class="badge badge-secondary" th:text="${emp.avatar}"></span>
+                    </td>
+                    <td class="font-weight-bold" th:text="${emp.name}"></td>
+                    <td th:text="${emp.age}"></td>
+                    <td>
+                        <!-- Truy cập LAZY thông qua emp.department.name -->
+                        <span class="badge badge-info" th:text="${emp.department.name}"></span>
+                    </td>
+                    <td>
+                        <span th:class="${emp.status == 'Đang làm việc' ? 'text-success font-weight-bold' : 'text-danger'}"
+                              th:text="${emp.status}"></span>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>
