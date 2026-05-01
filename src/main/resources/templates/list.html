@@ -3,14 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <title>Danh sách Nhân Viên</title>
+    <!-- Bootstrap 4 -->
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+    <!-- FontAwesome để lấy icon cho nút Sửa/Xóa -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 </head>
 <body class="bg-light">
 
 <div class="container mt-5">
     <div class="card shadow">
-        <div class="card-header bg-primary text-white">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
             <h3 class="mb-0">Danh Sách Nhân Viên</h3>
+            <!-- Nút Thêm mới -->
+            <a th:href="@{/add}" class="btn btn-light font-weight-bold">
+                <i class="fas fa-plus-circle"></i> Thêm Nhân Viên
+            </a>
         </div>
         <div class="card-body">
             <table class="table table-bordered table-hover text-center">
@@ -22,26 +29,44 @@
                     <th>Tuổi</th>
                     <th>Phòng Ban</th>
                     <th>Trạng thái</th>
+                    <th>Thao tác</th>
                 </tr>
                 </thead>
                 <tbody>
-                <!-- Vòng lặp in danh sách nhân viên -->
                 <tr th:each="emp, stat : ${employees}">
                     <td th:text="${stat.count}"></td>
                     <td>
-                        <!-- Tạm hiển thị text avatar, nếu có link ảnh thật có thể dùng thẻ img -->
-                        <span class="badge badge-secondary" th:text="${emp.avatar}"></span>
+                        <!-- Hiển thị ảnh upload từ thư mục /uploads/ -->
+                        <img th:src="@{'/uploads/' + ${emp.avatar}}"
+                             alt="Avatar"
+                             style="width: 50px; height: 50px; object-fit: cover; border-radius: 50%; border: 1px solid #ddd;"
+                             onerror="this.src='https://via.placeholder.com/50'">
                     </td>
                     <td class="font-weight-bold" th:text="${emp.name}"></td>
                     <td th:text="${emp.age}"></td>
                     <td>
-                        <!-- Truy cập LAZY thông qua emp.department.name -->
-                        <span class="badge badge-info" th:text="${emp.department.name}"></span>
+                        <span class="badge badge-info" th:text="${emp.department != null ? emp.department.name : 'N/A'}"></span>
                     </td>
                     <td>
-                        <span th:class="${emp.status == 'Đang làm việc' ? 'text-success font-weight-bold' : 'text-danger'}"
+                        <span th:class="${emp.status == 'Đang làm việc' ? 'badge badge-success' : 'badge badge-warning'}"
                               th:text="${emp.status}"></span>
                     </td>
+                    <td>
+                        <!-- Nút Sửa -->
+                        <a th:href="@{/employees/edit/{id}(id=${emp.id})}" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-edit"></i>
+                        </a>
+                        <!-- Nút Xóa (Dùng onclick để xác nhận trước khi xóa) -->
+                        <a th:href="@{/employees/delete/{id}(id=${emp.id})}"
+                           class="btn btn-sm btn-outline-danger"
+                           onclick="return confirm('Bạn có chắc chắn muốn xóa nhân viên này?')">
+                            <i class="fas fa-trash"></i>
+                        </a>
+                    </td>
+                </tr>
+                <!-- Hiển thị nếu danh sách trống -->
+                <tr th:if="${#lists.isEmpty(employees)}">
+                    <td colspan="7" class="text-muted">Chưa có nhân viên nào trong danh sách.</td>
                 </tr>
                 </tbody>
             </table>

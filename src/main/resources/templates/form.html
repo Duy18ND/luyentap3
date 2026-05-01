@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Quản lý Nhân Viên - Biểu mẫu</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+</head>
+<body class="bg-light">
+
+<div class="container mt-5">
+    <div class="card shadow">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            <h3 class="mb-0">Thông Tin Nhân Viên</h3>
+            <a th:href="@{/}" class="btn btn-light font-weight-bold">
+                <i class="fas fa-arrow-left"></i> Quay lại
+            </a>
+        </div>
+        <div class="card-body">
+            <form th:action="@{/save}" th:object="${employee}" method="post" enctype="multipart/form-data">
+
+                <!-- ID ẩn để dùng cho chức năng Sửa -->
+                <input type="hidden" th:field="*{id}">
+
+                <div class="row">
+                    <div class="col-md-8">
+                        <div class="form-group">
+                            <label class="font-weight-bold">Họ và Tên</label>
+                            <input type="text" th:field="*{name}" class="form-control" placeholder="Nhập đầy đủ họ tên" required>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label class="font-weight-bold">Tuổi</label>
+                            <input type="number" th:field="*{age}" class="form-control" placeholder="0" required>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label class="font-weight-bold">Phòng Ban</label>
+                            <select th:field="*{department.id}" class="form-control" required>
+                                <option value="">-- Chọn phòng ban --</option>
+                                <option th:each="dept : ${departments}"
+                                        th:value="${dept.id}"
+                                        th:text="${dept.name}"></option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label class="font-weight-bold">Trạng thái</label>
+                            <select th:field="*{status}" class="form-control">
+                                <option value="Đang làm việc">Đang làm việc</option>
+                                <option value="Nghỉ phép">Nghỉ phép</option>
+                                <option value="Tạm nghỉ">Tạm nghỉ</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="font-weight-bold">Ảnh đại diện (Avatar)</label>
+                    <div class="custom-file">
+                        <input type="file" name="file" class="custom-file-input" id="customFile" onchange="updateFileName()">
+                        <label class="custom-file-label" for="customFile" id="fileLabel">Chọn ảnh từ máy tính...</label>
+                    </div>
+                </div>
+
+                <hr>
+                <div class="text-right">
+                    <button type="reset" class="btn btn-secondary">
+                        <i class="fas fa-undo"></i> Làm mới
+                    </button>
+                    <button type="submit" class="btn btn-primary px-4 font-weight-bold">
+                        <i class="fas fa-save"></i> Lưu nhân viên
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    function updateFileName() {
+        var input = document.getElementById('customFile');
+        var label = document.getElementById('fileLabel');
+        if (input.files.length > 0) {
+            label.innerText = input.files[0].name;
+        }
+    }
+</script>
+
+</body>
+</html>
