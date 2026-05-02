@@ -4,6 +4,10 @@ import com.re.luyentap.model.Employee;
 import com.re.luyentap.repository.DepartmentRepository;
 import com.re.luyentap.repository.EmployeeRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -19,17 +23,51 @@ import java.util.UUID;
 @Controller
 @RequiredArgsConstructor
 public class EmployeeController {
+
     private final DepartmentRepository departmentRepository;
     private final EmployeeRepository employeeRepository;
 
     @GetMapping({"/", "/list"})
-    public String showList(Model model) {
-        model.addAttribute("employees", employeeRepository.findAll());
+    public String showList(Model model,
+                           @RequestParam(defaultValue = "1") int page,
+                           @RequestParam(defaultValue = "id") String sortField,
+                           @RequestParam(defaultValue = "desc") String sortDir,
+                           @RequestParam(required = false) String keyword) {
+
+        Sort sort = sortDir.equalsIgnoreCase(Sort.Direction.ASC.name()) ?
+                Sort.by(sortField).ascending() : Sort.by(sortField).descending();
+
+        int pageSize = 5;
+        int currentPage = page < 1 ? 1 : page;
+        Pageable pageable = PageRequest.of(currentPage - 1, pageSize, sort);
+
+        Page<Employee> pageResult;
+        if (keyword != null && !keyword.trim().isEmpty()) {
+            pageResult = employeeRepository.findByNameContainingIgnoreCase(keyword.trim(), pageable);
+        } else {
+            pageResult = employeeRepository.findAll(pageable);
+        }
+
+        if (currentPage > pageResult.getTotalPages() && pageResult.getTotalPages() > 0) {
+            currentPage = pageResult.getTotalPages();
+            pageable = PageRequest.of(currentPage - 1, pageSize, sort);
+            pageResult = keyword != null ?
+                    employeeRepository.findByNameContainingIgnoreCase(keyword.trim(), pageable) :
+                    employeeRepository.findAll(pageable);
+        }
+
+        model.addAttribute("employees", pageResult.getContent());
+        model.addAttribute("currentPage", currentPage);
+        model.addAttribute("totalPages", pageResult.getTotalPages());
+        model.addAttribute("totalItems", pageResult.getTotalElements());
+        model.addAttribute("sortField", sortField);
+        model.addAttribute("sortDir", sortDir);
+        model.addAttribute("reverseSortDir", sortDir.equals("asc") ? "desc" : "asc");
+        model.addAttribute("keyword", keyword);
+
         return "list";
     }
 
-
-    // 1. Hiển thị Form thêm mới
     @GetMapping("/add")
     public String showAddForm(Model model) {
         model.addAttribute("employee", new Employee());
@@ -37,7 +75,6 @@ public class EmployeeController {
         return "form";
     }
 
-    // 2. Xử lý lưu nhân viên và Upload file
     @PostMapping("/save")
     public String saveEmployee(@ModelAttribute("employee") Employee employee,
                                @RequestParam("file") MultipartFile file) {
@@ -55,7 +92,7 @@ public class EmployeeController {
                 e.printStackTrace();
             }
         } else {
-            employee.setAvatar("defazult-avatar.png");
+            employee.setAvatar("default-avatar.png");
         }
 
         employeeRepository.save(employee);

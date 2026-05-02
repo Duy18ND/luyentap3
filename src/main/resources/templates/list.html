@@ -3,9 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Danh sách Nhân Viên</title>
-    <!-- Bootstrap 4 -->
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
-    <!-- FontAwesome để lấy icon cho nút Sửa/Xóa -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 </head>
 <body class="bg-light">
@@ -14,7 +12,19 @@
     <div class="card shadow">
         <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
             <h3 class="mb-0">Danh Sách Nhân Viên</h3>
-            <!-- Nút Thêm mới -->
+
+            <form th:action="@{/list}" method="get" class="form-inline mx-auto">
+                <input type="hidden" name="sortField" th:value="${sortField}">
+                <input type="hidden" name="sortDir" th:value="${sortDir}">
+                <div class="input-group">
+                    <input type="text" name="keyword" th:value="${keyword}" class="form-control" placeholder="Tìm kiếm theo tên...">
+                    <div class="input-group-append">
+                        <button class="btn btn-light text-primary" type="submit"><i class="fas fa-search"></i></button>
+                        <a th:href="@{/list}" class="btn btn-light text-danger border-left" title="Xóa tìm kiếm"><i class="fas fa-times"></i></a>
+                    </div>
+                </div>
+            </form>
+
             <a th:href="@{/add}" class="btn btn-light font-weight-bold">
                 <i class="fas fa-plus-circle"></i> Thêm Nhân Viên
             </a>
@@ -25,8 +35,20 @@
                 <tr>
                     <th>STT</th>
                     <th>Avatar</th>
-                    <th>Họ và Tên</th>
-                    <th>Tuổi</th>
+                    <th>
+                        <a th:href="@{/list(page=${currentPage}, sortField='name', sortDir=${sortField == 'name' ? reverseSortDir : 'asc'}, keyword=${keyword})}" class="text-dark">
+                            Họ và Tên
+                            <i th:if="${sortField == 'name'}" class="fas" th:classappend="${sortDir == 'asc' ? 'fa-sort-up' : 'fa-sort-down'}"></i>
+                            <i th:unless="${sortField == 'name'}" class="fas fa-sort text-muted"></i>
+                        </a>
+                    </th>
+                    <th>
+                        <a th:href="@{/list(page=${currentPage}, sortField='age', sortDir=${sortField == 'age' ? reverseSortDir : 'asc'}, keyword=${keyword})}" class="text-dark">
+                            Tuổi
+                            <i th:if="${sortField == 'age'}" class="fas" th:classappend="${sortDir == 'asc' ? 'fa-sort-up' : 'fa-sort-down'}"></i>
+                            <i th:unless="${sortField == 'age'}" class="fas fa-sort text-muted"></i>
+                        </a>
+                    </th>
                     <th>Phòng Ban</th>
                     <th>Trạng thái</th>
                     <th>Thao tác</th>
@@ -34,9 +56,8 @@
                 </thead>
                 <tbody>
                 <tr th:each="emp, stat : ${employees}">
-                    <td th:text="${stat.count}"></td>
+                    <td th:text="${stat.count + (currentPage - 1) * 5}"></td>
                     <td>
-                        <!-- Hiển thị ảnh upload từ thư mục /uploads/ -->
                         <img th:src="@{'/uploads/' + ${emp.avatar}}"
                              alt="Avatar"
                              style="width: 50px; height: 50px; object-fit: cover; border-radius: 50%; border: 1px solid #ddd;"
@@ -52,11 +73,9 @@
                               th:text="${emp.status}"></span>
                     </td>
                     <td>
-                        <!-- Nút Sửa -->
                         <a th:href="@{/employees/edit/{id}(id=${emp.id})}" class="btn btn-sm btn-outline-primary">
                             <i class="fas fa-edit"></i>
                         </a>
-                        <!-- Nút Xóa (Dùng onclick để xác nhận trước khi xóa) -->
                         <a th:href="@{/employees/delete/{id}(id=${emp.id})}"
                            class="btn btn-sm btn-outline-danger"
                            onclick="return confirm('Bạn có chắc chắn muốn xóa nhân viên này?')">
@@ -64,12 +83,32 @@
                         </a>
                     </td>
                 </tr>
-                <!-- Hiển thị nếu danh sách trống -->
-                <tr th:if="${#lists.isEmpty(employees)}">
-                    <td colspan="7" class="text-muted">Chưa có nhân viên nào trong danh sách.</td>
+                <tr th:if="${totalItems == 0}">
+                    <td colspan="7" class="text-muted py-4">
+                        <i class="fas fa-info-circle mb-2"></i><br>
+                        Không tìm thấy nhân viên nào phù hợp.
+                    </td>
                 </tr>
                 </tbody>
             </table>
+
+            <div th:if="${totalPages > 1}" class="d-flex justify-content-between align-items-center mt-3">
+                <span class="text-muted">Tổng số: <b th:text="${totalItems}"></b> nhân viên</span>
+                <nav>
+                    <ul class="pagination mb-0">
+                        <li class="page-item" th:classappend="${currentPage == 1} ? 'disabled'">
+                            <a class="page-link" th:href="@{/list(page=${currentPage - 1}, sortField=${sortField}, sortDir=${sortDir}, keyword=${keyword})}">Previous</a>
+                        </li>
+                        <li th:each="i : ${#numbers.sequence(1, totalPages)}" class="page-item" th:classappend="${currentPage == i} ? 'active'">
+                            <a class="page-link" th:href="@{/list(page=${i}, sortField=${sortField}, sortDir=${sortDir}, keyword=${keyword})}" th:text="${i}"></a>
+                        </li>
+                        <li class="page-item" th:classappend="${currentPage == totalPages} ? 'disabled'">
+                            <a class="page-link" th:href="@{/list(page=${currentPage + 1}, sortField=${sortField}, sortDir=${sortDir}, keyword=${keyword})}">Next</a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+
         </div>
     </div>
 </div>
