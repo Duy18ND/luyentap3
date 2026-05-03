@@ -3,6 +3,7 @@ package com.re.luyentap.controller;
 import com.re.luyentap.model.Employee;
 import com.re.luyentap.repository.DepartmentRepository;
 import com.re.luyentap.repository.EmployeeRepository;
+import com.re.luyentap.service.DepartmentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -10,11 +11,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.io.File;
 import java.io.IOException;
@@ -26,13 +25,17 @@ public class EmployeeController {
 
     private final DepartmentRepository departmentRepository;
     private final EmployeeRepository employeeRepository;
+    private final DepartmentService departmentService;
 
     @GetMapping({"/", "/list"})
     public String showList(Model model,
                            @RequestParam(defaultValue = "1") int page,
                            @RequestParam(defaultValue = "id") String sortField,
                            @RequestParam(defaultValue = "desc") String sortDir,
-                           @RequestParam(required = false) String keyword) {
+                           @RequestParam(required = false) String keyword,
+                           @RequestParam(required = false) Long deptId,
+                           @RequestParam(required = false) Integer minAge,
+                           @RequestParam(required = false) Integer maxAge) {
 
         Sort sort = sortDir.equalsIgnoreCase(Sort.Direction.ASC.name()) ?
                 Sort.by(sortField).ascending() : Sort.by(sortField).descending();
@@ -41,19 +44,12 @@ public class EmployeeController {
         int currentPage = page < 1 ? 1 : page;
         Pageable pageable = PageRequest.of(currentPage - 1, pageSize, sort);
 
-        Page<Employee> pageResult;
-        if (keyword != null && !keyword.trim().isEmpty()) {
-            pageResult = employeeRepository.findByNameContainingIgnoreCase(keyword.trim(), pageable);
-        } else {
-            pageResult = employeeRepository.findAll(pageable);
-        }
+        Page<Employee> pageResult = employeeRepository.searchDynamic(keyword, deptId, minAge, maxAge, pageable);
 
         if (currentPage > pageResult.getTotalPages() && pageResult.getTotalPages() > 0) {
             currentPage = pageResult.getTotalPages();
             pageable = PageRequest.of(currentPage - 1, pageSize, sort);
-            pageResult = keyword != null ?
-                    employeeRepository.findByNameContainingIgnoreCase(keyword.trim(), pageable) :
-                    employeeRepository.findAll(pageable);
+            pageResult = employeeRepository.searchDynamic(keyword, deptId, minAge, maxAge, pageable);
         }
 
         model.addAttribute("employees", pageResult.getContent());
@@ -64,6 +60,10 @@ public class EmployeeController {
         model.addAttribute("sortDir", sortDir);
         model.addAttribute("reverseSortDir", sortDir.equals("asc") ? "desc" : "asc");
         model.addAttribute("keyword", keyword);
+        model.addAttribute("deptId", deptId);
+        model.addAttribute("minAge", minAge);
+        model.addAttribute("maxAge", maxAge);
+        model.addAttribute("departments", departmentRepository.findAll());
 
         return "list";
     }
@@ -96,6 +96,23 @@ public class EmployeeController {
         }
 
         employeeRepository.save(employee);
-        return "redirect:/";
+        return "redirect:/list";
+    }
+
+    @GetMapping("/employees/delete/{id}")
+    public String deleteEmployee(@PathVariable Long id) {
+        employeeRepository.deleteById(id);
+        return "redirect:/list";
+    }
+
+    @GetMapping("/departments/delete/{id}")
+    public String deleteDepartment(@PathVariable Long id, RedirectAttributes redirectAttributes) {
+        try {
+            int affectedCount = departmentService.deleteDepartmentSafely(id);
+            redirectAttributes.addFlashAttribute("successMessage", "Đã xóa phòng ban và cập nhật trạng thái cho " + affectedCount + " nhân viên.");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Lỗi khi xóa phòng ban: " + e.getMessage());
+        }
+        return "redirect:/list";
     }
 }

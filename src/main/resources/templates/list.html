@@ -9,26 +9,56 @@
 <body class="bg-light">
 
 <div class="container mt-5">
+
+    <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="fas fa-check-circle"></i> <span th:text="${successMessage}"></span>
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+        </button>
+    </div>
+    <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="fas fa-exclamation-triangle"></i> <span th:text="${errorMessage}"></span>
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+        </button>
+    </div>
+
     <div class="card shadow">
         <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
             <h3 class="mb-0">Danh Sách Nhân Viên</h3>
-
-            <form th:action="@{/list}" method="get" class="form-inline mx-auto">
-                <input type="hidden" name="sortField" th:value="${sortField}">
-                <input type="hidden" name="sortDir" th:value="${sortDir}">
-                <div class="input-group">
-                    <input type="text" name="keyword" th:value="${keyword}" class="form-control" placeholder="Tìm kiếm theo tên...">
-                    <div class="input-group-append">
-                        <button class="btn btn-light text-primary" type="submit"><i class="fas fa-search"></i></button>
-                        <a th:href="@{/list}" class="btn btn-light text-danger border-left" title="Xóa tìm kiếm"><i class="fas fa-times"></i></a>
-                    </div>
-                </div>
-            </form>
-
             <a th:href="@{/add}" class="btn btn-light font-weight-bold">
                 <i class="fas fa-plus-circle"></i> Thêm Nhân Viên
             </a>
         </div>
+
+        <div class="card-body bg-light border-bottom">
+            <form th:action="@{/list}" method="get">
+                <input type="hidden" name="sortField" th:value="${sortField}">
+                <input type="hidden" name="sortDir" th:value="${sortDir}">
+                <div class="row">
+                    <div class="col-md-3 mb-2">
+                        <input type="text" name="keyword" th:value="${keyword}" class="form-control" placeholder="Tên nhân viên...">
+                    </div>
+                    <div class="col-md-3 mb-2">
+                        <select name="deptId" class="form-control">
+                            <option value="">-- Tất cả phòng ban --</option>
+                            <option th:each="d : ${departments}" th:value="${d.id}" th:text="${d.name}" th:selected="${d.id == deptId}"></option>
+                        </select>
+                    </div>
+                    <div class="col-md-2 mb-2">
+                        <input type="number" name="minAge" th:value="${minAge}" class="form-control" placeholder="Từ tuổi...">
+                    </div>
+                    <div class="col-md-2 mb-2">
+                        <input type="number" name="maxAge" th:value="${maxAge}" class="form-control" placeholder="Đến tuổi...">
+                    </div>
+                    <div class="col-md-2 mb-2 d-flex">
+                        <button type="submit" class="btn btn-primary w-100 mr-1"><i class="fas fa-search"></i> Lọc</button>
+                        <a th:href="@{/list}" class="btn btn-secondary w-100" title="Xóa tìm kiếm"><i class="fas fa-times"></i> Hủy</a>
+                    </div>
+                </div>
+            </form>
+        </div>
+
         <div class="card-body">
             <table class="table table-bordered table-hover text-center">
                 <thead class="thead-light">
@@ -36,14 +66,14 @@
                     <th>STT</th>
                     <th>Avatar</th>
                     <th>
-                        <a th:href="@{/list(page=${currentPage}, sortField='name', sortDir=${sortField == 'name' ? reverseSortDir : 'asc'}, keyword=${keyword})}" class="text-dark">
+                        <a th:href="@{/list(page=${currentPage}, sortField='name', sortDir=${sortField == 'name' ? reverseSortDir : 'asc'}, keyword=${keyword}, deptId=${deptId}, minAge=${minAge}, maxAge=${maxAge})}" class="text-dark">
                             Họ và Tên
                             <i th:if="${sortField == 'name'}" class="fas" th:classappend="${sortDir == 'asc' ? 'fa-sort-up' : 'fa-sort-down'}"></i>
                             <i th:unless="${sortField == 'name'}" class="fas fa-sort text-muted"></i>
                         </a>
                     </th>
                     <th>
-                        <a th:href="@{/list(page=${currentPage}, sortField='age', sortDir=${sortField == 'age' ? reverseSortDir : 'asc'}, keyword=${keyword})}" class="text-dark">
+                        <a th:href="@{/list(page=${currentPage}, sortField='age', sortDir=${sortField == 'age' ? reverseSortDir : 'asc'}, keyword=${keyword}, deptId=${deptId}, minAge=${minAge}, maxAge=${maxAge})}" class="text-dark">
                             Tuổi
                             <i th:if="${sortField == 'age'}" class="fas" th:classappend="${sortDir == 'asc' ? 'fa-sort-up' : 'fa-sort-down'}"></i>
                             <i th:unless="${sortField == 'age'}" class="fas fa-sort text-muted"></i>
@@ -97,13 +127,13 @@
                 <nav>
                     <ul class="pagination mb-0">
                         <li class="page-item" th:classappend="${currentPage == 1} ? 'disabled'">
-                            <a class="page-link" th:href="@{/list(page=${currentPage - 1}, sortField=${sortField}, sortDir=${sortDir}, keyword=${keyword})}">Previous</a>
+                            <a class="page-link" th:href="@{/list(page=${currentPage - 1}, sortField=${sortField}, sortDir=${sortDir}, keyword=${keyword}, deptId=${deptId}, minAge=${minAge}, maxAge=${maxAge})}">Previous</a>
                         </li>
                         <li th:each="i : ${#numbers.sequence(1, totalPages)}" class="page-item" th:classappend="${currentPage == i} ? 'active'">
-                            <a class="page-link" th:href="@{/list(page=${i}, sortField=${sortField}, sortDir=${sortDir}, keyword=${keyword})}" th:text="${i}"></a>
+                            <a class="page-link" th:href="@{/list(page=${i}, sortField=${sortField}, sortDir=${sortDir}, keyword=${keyword}, deptId=${deptId}, minAge=${minAge}, maxAge=${maxAge})}" th:text="${i}"></a>
                         </li>
                         <li class="page-item" th:classappend="${currentPage == totalPages} ? 'disabled'">
-                            <a class="page-link" th:href="@{/list(page=${currentPage + 1}, sortField=${sortField}, sortDir=${sortDir}, keyword=${keyword})}">Next</a>
+                            <a class="page-link" th:href="@{/list(page=${currentPage + 1}, sortField=${sortField}, sortDir=${sortDir}, keyword=${keyword}, deptId=${deptId}, minAge=${minAge}, maxAge=${maxAge})}">Next</a>
                         </li>
                     </ul>
                 </nav>
@@ -112,6 +142,8 @@
         </div>
     </div>
 </div>
-
+<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
 </body>
 </html>

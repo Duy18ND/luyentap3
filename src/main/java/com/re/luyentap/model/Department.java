@@ -22,6 +22,6 @@ public class Department {
     private String name;
     private String location;
 
-    @OneToMany(mappedBy = "department", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "department", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     private List<Employee> employees;
 }
